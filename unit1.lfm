@@ -1,0 +1,113 @@
+object GLForm1: TGLForm1
+  Left = 527
+  Height = 486
+  Top = 173
+  Width = 467
+  AllowDropFiles = True
+  Caption = 'GLForm1'
+  Menu = MainMenu1
+  OnCreate = FormCreate
+  OnDropFiles = DropFiles
+  LCLVersion = '1.5'
+  object ErrorTimer: TTimer
+    Enabled = False
+    Interval = 300
+    OnTimer = ErrorTimerTimer
+    left = 64
+    top = 80
+  end
+  object MainMenu1: TMainMenu
+    left = 152
+    top = 80
+    object AppleMenu: TMenuItem
+      Caption = ''
+      object AboutMenu: TMenuItem
+        Caption = 'About'
+        OnClick = AboutMenuClick
+      end
+    end
+    object FileMenu: TMenuItem
+      Caption = 'File'
+      object OpenMenu: TMenuItem
+        Caption = 'Open'
+        ShortCut = 16463
+        OnClick = OpenMenuClick
+      end
+      object RotateMenu: TMenuItem
+        Caption = 'RotateMesh'
+        OnClick = RotateMenuClick
+      end
+      object PerspectiveMenu: TMenuItem
+        AutoCheck = True
+        Caption = 'Perspective'
+        OnClick = PerspectiveMenuClick
+      end
+    end
+    object ColorMenu: TMenuItem
+      Caption = 'Color'
+      object BackColorMenu: TMenuItem
+        Caption = 'Background'
+        OnClick = BackColorMenuClick
+      end
+      object ObjectColorMenu: TMenuItem
+        Caption = 'Object'
+        object GrayColorMenu: TMenuItem
+          Caption = 'Gray'
+          OnClick = ObjectColorMenuClick
+        end
+        object RedColorMenu: TMenuItem
+          Tag = 1
+          Caption = 'Red'
+          OnClick = ObjectColorMenuClick
+        end
+        object GreenColorMenu: TMenuItem
+          Tag = 2
+          Caption = 'Green'
+          OnClick = ObjectColorMenuClick
+        end
+        object BlueColorMenu: TMenuItem
+          Tag = 3
+          Caption = 'Blue'
+          OnClick = ObjectColorMenuClick
+        end
+        object CustomColorMenu: TMenuItem
+          Tag = 4
+          Caption = 'Custom'
+          OnClick = ObjectColorMenuClick
+        end
+      end
+    end
+  end
+  object OpenDialog1: TOpenDialog
+    Filter = 'PLY|*.ply'
+    left = 232
+    top = 80
+  end
+  object ColorDialog1: TColorDialog
+    Color = clBlack
+    CustomColors.Strings = (
+      'ColorA=000000'
+      'ColorB=000080'
+      'ColorC=008000'
+      'ColorD=008080'
+      'ColorE=800000'
+      'ColorF=800080'
+      'ColorG=808000'
+      'ColorH=808080'
+      'ColorI=C0C0C0'
+      'ColorJ=0000FF'
+      'ColorK=00FF00'
+      'ColorL=00FFFF'
+      'ColorM=FF0000'
+      'ColorN=FF00FF'
+      'ColorO=FFFF00'
+      'ColorP=FFFFFF'
+      'ColorQ=C0DCC0'
+      'ColorR=F0CAA6'
+      'ColorS=F0FBFF'
+      'ColorT=A4A0A0'
+    )
+    left = 312
+    top = 80
+  end
+end
