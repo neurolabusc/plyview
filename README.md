@@ -23,7 +23,11 @@ You can build this project from the command line. You can use the "ws" option to
 25-November-2015
  - Initial release
 
- ##### License
+##### License
 
  This software includes a [BSD license](https://opensource.org/licenses/BSD-2-Clause)
+
+##### Links
+
+ Sample PLY format images are available online (http://people.sc.fsu.edu/~jburkardt/data/ply/ply.html)
 
