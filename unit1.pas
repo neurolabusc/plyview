@@ -6,7 +6,7 @@ interface
 uses
   {$IFDEF DGL}dglOpenGL, {$ELSE}  gl, glext, {$ENDIF}
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  ExtCtrls, Menus, OpenGLContext, glmath, lcltype, lclintf, mesh;
+  ExtCtrls, Menus, OpenGLContext, glmath, lcltype, lclintf, mesh, meshify_simplify_quadric;
 type
   { TGLForm1 }
   TGLForm1 = class(TForm)
@@ -19,6 +19,9 @@ type
     ColorMenu: TMenuItem;
     BackColorMenu: TMenuItem;
     GrayColorMenu: TMenuItem;
+    DecimateMenu: TMenuItem;
+    SaveDialog1: TSaveDialog;
+    SaveMenu: TMenuItem;
     PerspectiveMenu: TMenuItem;
     RedColorMenu: TMenuItem;
     GreenColorMenu: TMenuItem;
@@ -28,6 +31,7 @@ type
     RotateMenu: TMenuItem;
     OpenDialog1: TOpenDialog;
     OpenMenu: TMenuItem;
+    procedure DecimateMenuClick(Sender: TObject);
     procedure OpenMesh(Filename: string);
     procedure AboutMenuClick(Sender: TObject);
     procedure BackColorMenuClick(Sender: TObject);
@@ -42,6 +46,7 @@ type
     procedure OpenMenuClick(Sender: TObject);
     procedure PerspectiveMenuClick(Sender: TObject);
     procedure RotateMenuClick(Sender: TObject);
+    procedure SaveMenuClick(Sender: TObject);
     procedure ShowmessageError(s: string);
     procedure GLBoxMouseWheel(Sender: TObject; Shift: TShiftState;   WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
   private
@@ -511,6 +516,29 @@ begin
   GLBox.invalidate;
 end; //OpenMesh
 
+procedure TGLForm1.DecimateMenuClick(Sender: TObject);
+var
+  nTri, nTriDesired: integer;
+  msStart: Dword;
+  s: string;
+  r: single;
+begin
+ msStart := gettickcount();
+ nTri := length(gShader.Faces);
+ s := '.3';
+ if not inputquery('Track simplify', 'Enter reduction factor (e.g. 0.2 will decimate 80% of all triangles)', s) then exit;
+ r := StrToFloatDef(s, 0.5);
+ if (r <= 0.0) or (r > 1.0) then begin
+    showmessage('Error: reduction factor should be BETWEEN 0 and 1');
+    exit;
+ end;
+ nTriDesired := round(nTri * r);
+ simplify_mesh(gShader.faces, gShader.vertices, nTriDesired, 2, true);
+ caption := format('Faces %d -> %d (%.3f, %d ms)', [ nTri, length(gShader.Faces), length(gShader.Faces)/nTri , gettickcount() - msStart]) ;
+ LoadBufferData(gShader.faces, gShader.vertices, gShader.vertexRGBA);
+ GLBox.invalidate;
+end;
+
 procedure TGLForm1.OpenMenuClick(Sender: TObject);
 begin
      if not OpenDialog1.execute then exit;
@@ -540,6 +568,12 @@ begin
   GLBox.invalidate;
 end;
 
+procedure TGLForm1.SaveMenuClick(Sender: TObject);
+begin
+  if not SaveDialog1.Execute then exit;
+  SaveObj(SaveDialog1.FileName, gShader.faces, gShader.vertices);
+end;
+
 procedure TGLForm1.DropFiles(Sender: TObject; const FileNames: array of String);
 begin
   OpenMesh(Filenames[0]);
@@ -557,7 +591,7 @@ begin
       gAzimuth := (gAzimuth + 10) mod 360;
       GLbox.Repaint;
    end;
-  Showmessage('OpenGL 4.1 PLY viewer 11/2015 FPS: '+inttostr(round( (kSamp*1000)/(gettickcount-s))));
+  Showmessage('OpenGL 4.1 PLY viewer 6/2016 FPS: '+inttostr(round( (kSamp*1000)/(gettickcount-s))));
 end;
 
 
@@ -599,6 +633,7 @@ procedure TGLForm1.FormCreate(Sender: TObject);
 begin
   GLbox:= TOpenGLControl.Create(GLForm1);
   Application.OnDropFiles:= @DropFiles;
+  Application.ShowButtonGlyphs:= sbgNever;
   //OSX has two modes:
   //    NSOpenGLProfileLegacy provides support for OpenGL 2.1/GLSL1.2 and earlier
   //    NSOpenGLProfileVersion3_2Core provides support for AT LEAST OpenGL 3.2/GLSL3.2 CORE
@@ -629,6 +664,7 @@ begin
 
   InitGL;
   OpenMesh('');
+  PerspectiveMenu.Checked := gShader.isPerspective;
 end;
 
 procedure TGLForm1.ErrorTimerTimer(Sender: TObject);

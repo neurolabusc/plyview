@@ -8,7 +8,8 @@ object GLForm1: TGLForm1
   Menu = MainMenu1
   OnCreate = FormCreate
   OnDropFiles = DropFiles
-  LCLVersion = '1.5'
+  Position = poScreenCenter
+  LCLVersion = '1.7'
   object ErrorTimer: TTimer
     Enabled = False
     Interval = 300
@@ -40,7 +41,17 @@ object GLForm1: TGLForm1
       object PerspectiveMenu: TMenuItem
         AutoCheck = True
         Caption = 'Perspective'
+        Checked = True
         OnClick = PerspectiveMenuClick
+      end
+      object DecimateMenu: TMenuItem
+        Caption = 'Decimate'
+        OnClick = DecimateMenuClick
+      end
+      object SaveMenu: TMenuItem
+        Caption = 'Save as OBJ'
+        ShortCut = 16467
+        OnClick = SaveMenuClick
       end
     end
     object ColorMenu: TMenuItem
@@ -79,7 +90,8 @@ object GLForm1: TGLForm1
     end
   end
   object OpenDialog1: TOpenDialog
-    Filter = 'PLY|*.ply'
+    Title = 'Open mesh'
+    Filter = 'PLY or OBJ|*.ply;*.obj'
     left = 232
     top = 80
   end
@@ -109,5 +121,11 @@ object GLForm1: TGLForm1
     )
     left = 312
     top = 80
+  end
+  object SaveDialog1: TSaveDialog
+    DefaultExt = '.obj'
+    Filter = 'OBJ mesh|*.obj'
+    left = 387
+    top = 88
   end
 end

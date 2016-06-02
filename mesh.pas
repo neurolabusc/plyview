@@ -30,8 +30,35 @@ TVertexRGBA = array of TRGBA;
 
 function ptf(x,y,z: single): TPoint3f;
 procedure LoadMesh(Filename: string; var faces: TFaces; var vertices: TVertices; var vertexRGBA: TVertexRGBA);
+procedure SaveObj(const FileName: string; var faces: TFaces; var vertices: TVertices);
 
 implementation
+
+procedure SaveObj(const FileName: string; var faces: TFaces; var vertices: TVertices);
+//create WaveFront object file
+// https://en.wikipedia.org/wiki/Wavefront_.obj_file
+var
+   f : TextFile;
+   FileNameObj: string;
+   i : integer;
+begin
+  if (length(faces) < 1) or (length(vertices) < 3) then begin
+     showmessage('You need to open a mesh before you can save it');
+     exit;
+  end;
+  FileNameObj := changeFileExt(FileName, '.obj');
+  AssignFile(f, FileNameObj);
+  ReWrite(f);
+  WriteLn(f, '# WaveFront Object format image created with Surf Ice');
+  for i := 0 to (length(vertices)-1) do
+      WriteLn(f, 'v ' + floattostr(vertices[i].X)+' '+floattostr(vertices[i].Y)+' '+ floattostr(vertices[i].Z));
+  for i := 0 to (length(faces)-1) do
+      WriteLn(f, 'f ' + inttostr(faces[i].X+1)+' '+inttostr(faces[i].Y+1)+' '+ inttostr(faces[i].Z+1)); //+1 since "A valid vertex index starts from 1 "
+  //fprintf(fid, '# WaveFront Object format image created with MRIcroS\n');
+  //fprintf(fid, 'v %.12g %.12g %.12g\n', vertex');
+  //fprintf(fid, 'f %d %d %d\n', (face)');
+  CloseFile(f);
+end; // SaveObj()
 
 function ptf(x,y,z: single): TPoint3f; //create float vector
 begin
@@ -115,15 +142,87 @@ begin
   s := outguy.Sngl;
 end; // SwapSingle()
 
+function FSize (lFName: String): longint;
+var F : File Of byte;
+begin
+  result := 0;
+  if not fileexists(lFName) then exit;
+  Assign (F, lFName);
+  Reset (F);
+  result := FileSize(F);
+  Close (F);
+end;
+
+procedure LoadObj(const FileName: string; var faces: TFaces; var vertices: TVertices);//; var vertexRGBA: TVertexRGBA);
+//WaveFront Obj file used by Blender
+// https://en.wikipedia.org/wiki/Wavefront_.obj_file
+const
+  kBlockSize = 8192;
+var
+   f: TextFile;
+   fsz : int64;
+   s : string;
+   strlst : TStringList;
+   i,j, num_v, num_f, new_f: integer;
+begin
+     fsz := FSize (FileName);
+     if fsz < 32 then exit;
+     //init values
+     num_v := 0;
+     num_f := 0;
+     strlst:=TStringList.Create;
+     setlength(vertices, (fsz div 70)+kBlockSize); //guess number of faces based on filesize to reduce reallocation frequencey
+     setlength(faces, (fsz div 35)+kBlockSize); //guess number of vertices based on filesize to reduce reallocation frequencey
+     //load faces and vertices
+     AssignFile(f, FileName);
+     Reset(f);
+     DefaultFormatSettings.DecimalSeparator := '.';
+     while not EOF(f) do begin
+        readln(f,s);
+        if length(s) < 7 then continue;
+        if (s[1] <> 'v') and (s[1] <> 'f') then continue; //only read 'f'ace and 'v'ertex lines
+        if (s[2] = 'p') or (s[2] = 'n') or (s[2] = 't') then continue; //ignore vp/vn/vt data: avoid delimiting text yields 20% faster loads
+        strlst.DelimitedText := s;
+        if (strlst.count > 3) and ( (strlst[0]) = 'f') then begin
+           //warning: need to handle "f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3"
+           //warning: face could be triangle, quad, or more vertices!
+           new_f := strlst.count - 3;
+           if ((num_f+new_f) >= length(faces)) then
+              setlength(faces, length(faces)+new_f+kBlockSize);
+           for i := 1 to (strlst.count-1) do
+               if (pos('/', strlst[i]) > 1) then // "f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3" -> f v1 v2 v3
+                  strlst[i] := Copy(strlst[i], 1, pos('/', strlst[i])-1);
+           for j := 1 to (new_f) do begin
+               faces[num_f].X := strtointDef(strlst[1], 0) - 1;
+               faces[num_f].Y := strtointDef(strlst[j+1], 0) - 1;  //-1 since "A valid vertex index starts from 1"
+               faces[num_f].Z := strtointDef(strlst[j+2], 0) - 1;  //-1 since "A valid vertex index starts from 1"
+               inc(num_f);
+           end;
+        end;
+        if (strlst.count > 3) and ( (strlst[0]) = 'v') then begin
+           if ((num_v+1) >= length(vertices)) then
+              setlength(vertices, length(vertices)+kBlockSize);
+           vertices[num_v].X := strtofloatDef(strlst[1], 0);
+           vertices[num_v].Y := strtofloatDef(strlst[2], 0);
+           vertices[num_v].Z := strtofloatDef(strlst[3], 0);
+           inc(num_v);
+        end;
+     end;
+     CloseFile(f);
+     strlst.free;
+     setlength(faces, num_f);
+     setlength(vertices, num_v);
+end; // LoadObj()
+
 procedure LoadPly(const FileName: string; var faces: TFaces; var vertices: TVertices; var vertexRGBA: TVertexRGBA);
 // https://en.wikipedia.org/wiki/PLY_(file_format)
-// http://paulbourke.net/dataformats/ply
+// http://paulbourke.net/dataformats/ply/
 var
    fb: file;
    f: TextFile;
    isSwap, isVertexSection, isAscii, isLittleEndian, isUint32 : boolean;
    redOffset, greenOffset, blueOffset, AlphaOffset,
-   sz, i,j, num_v, num_f, num_vx, num_header_lines, vertexOffset: integer;
+   hdrSz, sz, i, j,  num_v, num_f, num_vx, num_header_lines, vertexOffset, indexSectionExtraBytes: integer;
    str: string;
    byt: byte;
    flt: single;
@@ -132,7 +231,6 @@ var
    i16: array [1..3] of word;
    binByt: array of byte;
 begin
-  if not fileexists(Filename) then exit;
   AssignFile(f, FileName);
   Reset(f);
   ReadLn(f, str);
@@ -143,10 +241,13 @@ begin
   end;
   strlst:=TStringList.Create;
   num_header_lines := 1;
+  num_f := 0;
+  num_v := 0;
   isAscii := false;
   isLittleEndian := false;
   isUint32 := true; //assume uint32 not short int16
   isVertexSection := false;
+  indexSectionExtraBytes := 0;
   vertexOffset := 0;
   redOffset := 0; greenOffset := 0; blueOffset := 0; AlphaOffset := 0;
   while not EOF(f) do begin
@@ -170,6 +271,8 @@ begin
         num_f := StrToIntDef(strlst[2], 0); // "element face 120"
         isVertexSection := false;
      end;
+     //detect "short" or "uint" from "property list uchar uint vertex_indices"
+
      if (isVertexSection) and (pos('PROPERTY', UpperCase(str)) = 1) then begin
         strlst.DelimitedText := str;
         if (strlst.count > 2) and (pos('RED', UpperCase(strlst[2])) = 1) then begin
@@ -186,6 +289,7 @@ begin
            blueOffset := vertexOffset;
         if (strlst.count > 2) and (pos('ALPHA', UpperCase(strlst[2])) = 1) then
            alphaOffset := vertexOffset;
+        //showmessage(str+ inttostr(strlst.count));
         if isAscii then
           vertexOffset := vertexOffset + 1  //for ASCII we count items not bytes
         else if (pos('CHAR', UpperCase(strlst[1])) = 1) or (pos('UCHAR', UpperCase(strlst[1])) = 1) then
@@ -204,17 +308,30 @@ begin
      end; //Vertex section properties
      if (not isVertexSection) and (pos('PROPERTY', UpperCase(str)) = 1) then begin
         //n.b. Wiki and MeshLab use  'VERTEX_INDICES' but Bourke uses "VERTEX_INDEX"
+        strlst.DelimitedText := str;
         if (strlst.count > 4) and (pos('VERTEX_INDEX', UpperCase(strlst[4])) = 1) and (pos('SHORT', UpperCase(strlst[3])) = 1) then
-           isUint32 := false;
-        if (strlst.count > 4) and (pos('VERTEX_INDICES', UpperCase(strlst[4])) = 1) and (pos('SHORT', UpperCase(strlst[3])) = 1) then
-           isUint32 := false;
+           isUint32 := false
+        else if (strlst.count > 4) and (pos('VERTEX_INDICES', UpperCase(strlst[4])) = 1) and (pos('SHORT', UpperCase(strlst[3])) = 1) then
+           isUint32 := false
+        else if (strlst.count > 2)  then begin
+           if (pos('CHAR', UpperCase(strlst[1])) = 1) or  (pos('UCHAR', UpperCase(strlst[1])) = 1) then
+              indexSectionExtraBytes := indexSectionExtraBytes + 1;
+           if (pos('SHORT', UpperCase(strlst[1])) = 1) or  (pos('USHORT', UpperCase(strlst[1])) = 1) then
+              indexSectionExtraBytes := indexSectionExtraBytes + 2;
+           if (pos('INT', UpperCase(strlst[1])) = 1) or  (pos('UINT', UpperCase(strlst[1])) = 1)  or  (pos('FLOAT', UpperCase(strlst[1])) = 1) then
+              indexSectionExtraBytes := indexSectionExtraBytes + 4;
+           if (pos('DOUBLE', UpperCase(strlst[1])) = 1) then
+              indexSectionExtraBytes := indexSectionExtraBytes + 8;
+        end;
      end; //face section properties
+
   end;
   if EOF(f) or (num_v < 3) or (num_f < 1) then begin
-    showmessage('Not a PLY file');
+    showmessage('Not a mesh-based PLY file (perhaps point based, try opening in MeshLab)');
     closefile(f);
     exit;
   end;
+
   setlength(vertices, num_v);
   setlength(faces, num_f);
   if redOffset > 2 then
@@ -241,14 +358,19 @@ begin
             readln(f, vertices[i].X, vertices[i].Y, vertices[i].Z);
     for i := 0 to (num_f - 1) do begin
       readln(f, num_vx, faces[i].X, faces[i].Y, faces[i].Z);
-      if num_vx <> 3 then begin
-          showmessage('only able to read triangle-based PLY files');
+      if num_vx < 3 then begin
+            showmessage('File does not have the expected number of triangle-based faces '+ FileName);
+            closefile(f);
+            exit;
+      end;
+      if num_vx > 3 then begin
+          showmessage('Only able to read triangle-based PLY files. (Hint: open with MeshLab and export as CTM format) ');
           closefile(f);
           exit;
       end;
     end;
     closefile(f);
-  end else begin
+  end else begin //if ASCII else Binary
     closefile(f);
     isSwap := false;
     {$IFDEF ENDIAN_LITTLE}
@@ -276,6 +398,7 @@ begin
              num_vx := num_vx + 1;
           i := i + 1;
     end;
+    hdrSz := i;
     if (num_vx < num_header_lines) then begin
        closefile(fb);
        exit;
@@ -306,9 +429,10 @@ begin
           end;
     end; //swapped
     for i := 0 to (num_f -1) do begin
+        setlength(binByt, indexSectionExtraBytes);
         blockread(fb, byt, 1 );
         if byt <> 3 then begin
-                showmessage('Only able to read triangle-based PLY files. Solution: open and export with MeshLab. Index: '+inttostr(i)+ ' bytesPerIndex: '+inttostr(vertexOffset)+' faces: ' + inttostr(byt));
+                showmessage('Only able to read triangle-based PLY files. Solution: open and export with MeshLab. Index: '+inttostr(i)+ ' Header Bytes '+inttostr(hdrSz)+' bytesPerVertex: '+inttostr(vertexOffset)+' faces: ' + inttostr(byt));
                 closefile(fb);
                 setlength(faces,0);
                 setlength(vertices,0);
@@ -333,7 +457,10 @@ begin
               blockread(fb, i16[1], 3 * 2 );
               faces[i] := pti(i16[1], i16[2], i16[3]); //winding order matches MeshLab
           end;
-        end;
+
+        end; //is Swapped else unSwapped
+        if (indexSectionExtraBytes > 0) then
+           blockread(fb, binByt[0], indexSectionExtraBytes);
     end;
     closefile(fb);
    end; //if ascii else binary
@@ -414,14 +541,13 @@ begin
 end; // MakePyramid()
 
 procedure LoadMesh(Filename: string; var faces: TFaces; var vertices: TVertices; var vertexRGBA: TVertexRGBA);
-var
-   i: integer;
-   f: TPoint3i;
 begin
   setlength(faces, 0);
   setlength(vertices,0);
   setlength(vertexRGBA, 0);
-  if (length(Filename) > 0) and (FileExists(Filename)) then
+  if (length(Filename) > 0) and (FileExists(Filename)) and (UpperCase(ExtractFileExt(Filename)) = '.OBJ') then
+         LoadObj(Filename, faces, vertices)
+  else if (length(Filename) > 0) and (FileExists(Filename)) then
      LoadPly(Filename, faces, vertices, vertexRGBA);
   if (length(faces) < 1) or (length(vertices) < 3) then
       MakePyramid(faces, vertices);
