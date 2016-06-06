@@ -162,6 +162,7 @@ begin
   glGetShaderInfoLog(glObjectID, maxLength, @maxLength, @s[1]);
   {$ENDIF}
   s:=trim(s);
+  if (length(s) < 1) then exit;
   GLForm1.ShowmessageError('GLSL error '+s);
 end;
 
@@ -647,6 +648,9 @@ begin
   {$ENDIF}
   {$IFDEF Darwin}
   OpenMenu.ShortCut :=  ShortCut(Word('O'), [ssMeta]);
+  SaveMenu.ShortCut :=  ShortCut(Word('S'), [ssMeta]);
+  {$ELSE}
+  AppleMenu.Caption := 'Help';
   {$ENDIF}
   GLbox.OpenGLMajorVersion:= 4;
   GLbox.OpenGLMinorVersion:= 1;
