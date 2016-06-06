@@ -8,9 +8,9 @@ This project displays PLY or OBJ format polygon meshes. It requires OpenGL versi
 
 ##### Compiling
 
-By default this project is set up to use OSX's Cocoa widgetset, as OSX's Carbon widgetset does not support modern OpenGL versions. If you wish to compile this in Linux or Windows you will need to open up the project with Lazarus, and choose Project/Options/Additions&Overrides and delete the "Cocoa" widgetset.
+For Windows and Linux users you should be able to open this project with the Lazarus IDE and compile the project using the Run/Run menu item. For OSX things are a bit more complicated because the default OSX widgetset for Lazarus is Carbon, which does not support modern OpenGL. Therefore, if you wish to compile this on Lazarus using OSX you will need to open up the project with Lazarus, and choose Project/Options/Additions&Overrides insert "Cocoa" as the target widgetset. After this you can compile the project using the Run/Run command.
 
-You can build this project from the command line. You can use the "ws" option to set the desired widgetset:
+You can also build this project from the command line. You can use the "ws" option to set the desired widgetset:
 
  - lazbuild -B --ws=cocoa plyview.lpr
 
