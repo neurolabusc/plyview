@@ -4,9 +4,10 @@ unit Unit1;
 //{$DEFINE DGL} //If this line is uncommented, use dglOpenGL library, else gl/glext library
 interface
 uses
-  {$IFDEF DGL}dglOpenGL, {$ELSE}  gl, glext, {$ENDIF}
-  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  ExtCtrls, Menus, OpenGLContext, glmath, lcltype, lclintf, mesh, meshify_simplify_quadric;
+  glcorearb,
+  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ExtCtrls,
+  Menus, OpenGLContext, glmath, lcltype, lclintf, Grids, mesh,
+  meshify_simplify_quadric;
 type
   { TGLForm1 }
   TGLForm1 = class(TForm)
