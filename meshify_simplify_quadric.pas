@@ -12,19 +12,6 @@ interface
 
 uses
     Math, mesh;
-(*Type
-  TPoint3f = packed record
-    X: single;
-    Y: single;
-    Z: single
-  end;
- TPoint3i = packed record
-    X: longint;
-    Y: longint;
-    Z: longint;
-  end;
- TFaces = array of TPoint3i; //n.b. Triangle indexed from zero, so face composed of first three vertices is [0,1,2]
- TVertices = array of TPoint3f; *)
 
 procedure simplify_mesh(var faces : TFaces; var verts: TVertices; target_count: integer; agressiveness : double=7; resize: boolean=true);
 

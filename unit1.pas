@@ -1,15 +1,25 @@
 unit Unit1;
 {$mode objfpc}{$H+}
 //OpenGL 4.1 Core demo - displays PLY format images
-//{$DEFINE DGL} //If this line is uncommented, use dglOpenGL library, else gl/glext library
+
+//If both of the next two lines are commented, use the GLCOREARB library
+// {$DEFINE GLEXT} //If this line is uncommented, use GL/GLEXT library - Fails with MacOS
+// {$DEFINE DGL} //If this line is uncommented, use dglOpenGL library
 interface
 uses
-  glcorearb,
+  {$IFDEF GLEXT}
+  gl, glext,
+  {$ELSE}
+   {$IFDEF DGL}
+    dglOpenGL,
+   {$ELSE}
+    glcorearb,
+   {$ENDIF}
+  {$ENDIF}
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ExtCtrls,
   Menus, OpenGLContext, glmath, lcltype, lclintf, Grids, mesh,
   meshify_simplify_quadric;
 type
-  { TGLForm1 }
   TGLForm1 = class(TForm)
     ColorDialog1: TColorDialog;
     ErrorTimer: TTimer;
@@ -66,7 +76,6 @@ type
 
 TVtxNormClr = Packed Record
   vtx   : TPoint3f; //vertex coordinates
-  //norm   : TPoint3f; //vertex normal
   norm : int32;
   clr : TRGBA;
 end;
@@ -96,8 +105,6 @@ const
 +#10'uniform mat3 NormalMatrix;'
 +#10'uniform vec3 light_pos = vec3(0.0, 20.0, 30.0); //LR, -DU+, -FN+'
 +#10'void main() {'
-+#10'    //mat3 NormalMatrixGPU = mat3(transpose(inverse(ModelViewMatrix)));'
-+#10'    //vN = normalize((NormalMatrixGPU * Norm));'
 +#10'    vN = normalize((NormalMatrix * Norm));'
 +#10'    gl_Position = ModelViewProjectionMatrix * vec4(Vert, 1.0);'
 +#10'    vL = normalize(light_pos);'
@@ -119,16 +126,11 @@ kFrag = '#version 330'
 +#10' vec3 v = normalize(vV);'
 +#10' vec3 h = normalize(vL+v);'
 +#10' float diffuse = dot(vL,n);'
-+#10' //if (n.z < 0.0) { //treat backfaces differently'
-+#10' // color = vec4(1.0,0.0,0.0, 1.0);'
-+#10' // return;'
-+#10' //}'
 +#10' vec3 AmbientColour = vClr.rgb;'
 +#10' vec3 DiffuseColour = vClr.rgb;'
 +#10' vec3 SpecularColour = vec3(1.0, 1.0, 1.0);'
 +#10' float specular =  pow(max(0.0,dot(n,h)),1.0/(Roughness * Roughness));'
 +#10' color = vec4(AmbientColour*Ambient + DiffuseColour*diffuse*Diffuse +SpecularColour*specular* Specular, 1.0);'
-+#10' //color.rgb = n;'
 +#10'}';
 
 var
@@ -157,11 +159,11 @@ begin
   glGetShaderiv(glObjectID, GL_INFO_LOG_LENGTH, @maxLength);
   if (maxLength < 1) then exit;
   setlength(s, maxLength);
-  {$IFDEF DGL}
-  glGetShaderInfoLog(glObjectID, maxLength, maxLength, @s[1]);
-  {$ELSE}
+  //{$IFDEF DGL}
+  //glGetShaderInfoLog(glObjectID, maxLength, maxLength, @s[1]);
+  //{$ELSE}
   glGetShaderInfoLog(glObjectID, maxLength, @maxLength, @s[1]);
-  {$ENDIF}
+  //{$ENDIF}
   s:=trim(s);
   if (length(s) < 1) then exit;
   GLForm1.ShowmessageError('GLSL error '+s);
@@ -343,30 +345,30 @@ begin
   glBindVertexArray(gShader.vao_point);
   glBindBuffer(GL_ARRAY_BUFFER, gShader.vbo_point);
   //Vertices
-  {$IFDEF DGL}
-  glVertexAttribPointer(kATTRIB_VERT, 3, GL_FLOAT, FALSE, sizeof(TVtxNormClr), PChar(0));
-  {$ELSE}
+  //{$IFDEF DGL}
+  //glVertexAttribPointer(kATTRIB_VERT, 3, GL_FLOAT, FALSE, sizeof(TVtxNormClr), PChar(0));
+  //{$ELSE}
   glVertexAttribPointer(kATTRIB_VERT, 3, GL_FLOAT, GL_FALSE, sizeof(TVtxNormClr), PChar(0));
-  {$ENDIF}
+  //{$ENDIF}
   glEnableVertexAttribArray(kATTRIB_VERT);
   //Normals typically stored as 3*32 bit floats (96 bytes), but we will pack them as 10-bit integers in a single 32-bit value with GL_INT_2_10_10_10_REV
   //  https://www.opengl.org/wiki/Vertex_Specification_Best_Practices
-  {$IFDEF DGL}
+  //{$IFDEF DGL}
   //glVertexAttribPointer(kATTRIB_NORM, 3, GL_FLOAT, FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
-  glVertexAttribPointer(kATTRIB_NORM, 4, GL_INT_2_10_10_10_REV, FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
-  {$ELSE}
+  //glVertexAttribPointer(kATTRIB_NORM, 4, GL_INT_2_10_10_10_REV, FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
+  //{$ELSE}
   //glVertexAttribPointer(kATTRIB_NORM, 3, GL_FLOAT, GL_FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
   glVertexAttribPointer(kATTRIB_NORM, 4, GL_INT_2_10_10_10_REV, GL_FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
-  {$ENDIF}
+  //{$ENDIF}
   glEnableVertexAttribArray(kATTRIB_NORM);
   //Color
-  {$IFDEF DGL}
+  //{$IFDEF DGL}
   //glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, TRUE, sizeof(TVtxNormClr), PChar(2 * sizeof(TPoint3f)));
-  glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, TRUE, sizeof(TVtxNormClr), PChar(sizeof(int32)+ sizeof(TPoint3f)));
-  {$ELSE}
+  //glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, TRUE, sizeof(TVtxNormClr), PChar(sizeof(int32)+ sizeof(TPoint3f)));
+  //{$ELSE}
   //glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TVtxNormClr), PChar(2 * sizeof(TPoint3f)));
   glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TVtxNormClr), PChar(sizeof(int32)+ sizeof(TPoint3f)));
-  {$ENDIF}
+  //{$ENDIF}
   glEnableVertexAttribArray(kATTRIB_CLR);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
@@ -384,15 +386,22 @@ end;
 
 procedure  InitGL;
 begin
-  {$IFDEF DGL}
-  InitOpenGL;
-  ReadExtensions;
-  {$ELSE}
-  //If your compiler does not find Load_GL_version_3_3_CORE you will need to update glext.pp
-  if not  Load_GL_version_3_3_CORE then begin
+  {$IFDEF GLEXT}
+   if not  Load_GL_version_3_2 then begin
      GLForm1.ShowmessageError('Error '+glGetString(GL_VENDOR)+'; OpenGL= '+glGetString(GL_VERSION)+'; Shader='+glGetString(GL_SHADING_LANGUAGE_VERSION));
      exit;
   end;
+  {$ELSE}
+    {$IFDEF DGL}
+    InitOpenGL;
+    ReadExtensions;
+    {$ELSE}
+    //If your compiler does not find Load_GL_version_3_3_CORE you will need to update glext.pp
+    if not  Load_GL_version_3_3_CORE then begin
+       GLForm1.ShowmessageError('Error '+glGetString(GL_VENDOR)+'; OpenGL= '+glGetString(GL_VERSION)+'; Shader='+glGetString(GL_SHADING_LANGUAGE_VERSION));
+       exit;
+    end;
+    {$ENDIF}
   {$ENDIF}
   GLForm1.caption := glGetString(GL_VENDOR)+'; OpenGL= '+glGetString(GL_VERSION)+'; Shader='+glGetString(GL_SHADING_LANGUAGE_VERSION);
   gShader.shaderProgram :=  initVertFrag(kVert,  kFrag);
@@ -593,7 +602,7 @@ begin
       gAzimuth := (gAzimuth + 10) mod 360;
       GLbox.Repaint;
    end;
-  Showmessage('OpenGL 4.1 PLY viewer 6/2016 FPS: '+inttostr(round( (kSamp*1000)/(gettickcount-s))));
+  Showmessage('OpenGL 4.1 PLY viewer 4/2017 FPS: '+inttostr(round( (kSamp*1000)/(gettickcount-s))));
 end;
 
 
@@ -651,10 +660,10 @@ begin
   OpenMenu.ShortCut :=  ShortCut(Word('O'), [ssMeta]);
   SaveMenu.ShortCut :=  ShortCut(Word('S'), [ssMeta]);
   {$ELSE}
-  AppleMenu.Caption := 'Help';
+  AppleMenu.Caption := 'About';
   {$ENDIF}
-  GLbox.OpenGLMajorVersion:= 4;
-  GLbox.OpenGLMinorVersion:= 1;
+  GLbox.OpenGLMajorVersion:= 3;
+  GLbox.OpenGLMinorVersion:= 3;
   GLbox.AlphaBits:= 8;
   GLbox.AutoResizeViewport:= true;
   GLBox.Parent := self;
@@ -666,7 +675,6 @@ begin
   GLBox.OnMouseUp := @GLboxMouseUp;
   GLBox.OnMouseWheel := @GLboxMouseWheel;
   GLBox.MakeCurrent(false);
-
   InitGL;
   OpenMesh('');
   PerspectiveMenu.Checked := gShader.isPerspective;

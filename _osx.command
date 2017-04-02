@@ -4,9 +4,10 @@
 here="`dirname \"$0\"`"
 cd "$here" || exit 1
 
-#compile Surfice as 64-bit Cocoa
+#compile to 64-bit Cocoa (Carbon does not support modern OpenGL)
 ##lazbuild ./plyview.lpr --cpu=x86_64 --ws=cocoa --compiler="/usr/local/bin/ppcx64"
-lazbuild ./plyview.lpr
+#compile to Cocoa (Carbon does not support modern OpenGL)
+lazbuild ./plyview.lpr --ws=cocoa
 strip  ./plyview
 
 rm *.~*

@@ -9,7 +9,7 @@ object GLForm1: TGLForm1
   OnCreate = FormCreate
   OnDropFiles = DropFiles
   Position = poScreenCenter
-  LCLVersion = '1.7'
+  LCLVersion = '1.6.4.0'
   object ErrorTimer: TTimer
     Enabled = False
     Interval = 300
