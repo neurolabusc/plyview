@@ -386,18 +386,18 @@ end;
 
 procedure  InitGL;
 begin
-  {$IFDEF GLEXT}
-   if not  Load_GL_version_3_2 then begin
-     GLForm1.ShowmessageError('Error '+glGetString(GL_VENDOR)+'; OpenGL= '+glGetString(GL_VERSION)+'; Shader='+glGetString(GL_SHADING_LANGUAGE_VERSION));
-     exit;
-  end;
+  {$IFDEF DGL} //use dglOpenGL
+   InitOpenGL;
+   ReadExtensions;
   {$ELSE}
-    {$IFDEF DGL}
-    InitOpenGL;
-    ReadExtensions;
-    {$ELSE}
+    {$IFDEF GLEXT} //use gl/glext
+     if not  Load_GL_version_3_2 then begin
+       GLForm1.ShowmessageError('Error '+glGetString(GL_VENDOR)+'; OpenGL= '+glGetString(GL_VERSION)+'; Shader='+glGetString(GL_SHADING_LANGUAGE_VERSION));
+       exit;
+     end;
+    {$ELSE} //use glcorearb
     //If your compiler does not find Load_GL_version_3_3_CORE you will need to update glext.pp
-    if not  Load_GL_version_3_3_CORE then begin
+    if not  Load_GL_version_3_2_CORE then begin
        GLForm1.ShowmessageError('Error '+glGetString(GL_VENDOR)+'; OpenGL= '+glGetString(GL_VERSION)+'; Shader='+glGetString(GL_SHADING_LANGUAGE_VERSION));
        exit;
     end;
