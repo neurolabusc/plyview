@@ -6,7 +6,10 @@ unit Unit1;
 // {$DEFINE GLEXT} //If this line is uncommented, use GL/GLEXT library - Fails with MacOS
 // {$DEFINE DGL} //If this line is uncommented, use dglOpenGL library
 
-//{$DEFINE RETINA} // <- requires patch to OpenGLContext.pas to support retina OpenGL
+{$DEFINE RETINA} // <- requires Lazarus 1.9 svn 55355 or later
+{$IFNDEF LCLCocoa}
+  {$UNDEF RETINA} //Retina mode MacOS Cocoa only
+{$ENDIF}
 
 interface
 uses
@@ -45,6 +48,9 @@ type
     RotateMenu: TMenuItem;
     OpenDialog1: TOpenDialog;
     OpenMenu: TMenuItem;
+    {$IFDEF RETINA}
+    procedure SetRetina;
+    {$ENDIF}
     procedure DecimateMenuClick(Sender: TObject);
     procedure OpenMesh(Filename: string);
     procedure AboutMenuClick(Sender: TObject);
@@ -73,6 +79,12 @@ var
 
 implementation
 {$R *.lfm}
+
+{$IFDEF RETINA}
+uses
+  glcocoanscontext;
+{$ENDIF}
+
 
 type
 
@@ -139,6 +151,7 @@ kFrag = '#version 330'
 var
   gShader: TShader;
   GLBox:TOpenGLControl;
+  gIsRetina : boolean = true;
   gGLerror : string = '';
   gMouseX : integer = -1;
   gMouseY : integer = -1;
@@ -146,6 +159,23 @@ var
   gTranslateY : integer = 0;
   gElevation : integer = 30;
   gAzimuth : integer = 30;
+
+  {$IFDEF RETINA}
+  procedure TGLForm1.SetRetina;
+  begin
+    //{$DEFINE FELIPE}
+    {$IFDEF FELIPE}
+    if gIsRetina then
+       GLBox.Options := [ocoMacRetinaMode]
+    else
+      GLBox.Options := [];
+    {$ELSE}
+
+    LSetWantsBestResolutionOpenGLSurface(gIsRetina, GLBox.Handle);
+    {$ENDIF}
+  end;
+
+  {$ENDIF}
 
 procedure TGLForm1.ShowmessageError(s: string);
 begin
@@ -440,6 +470,7 @@ var
   m, mv : TnMat44;
   n: TnMat33;
   scale: single;
+  backingWidth, backingHeight: Integer;
 begin
   glUseProgram(gShader.shaderProgram);
   glClearColor( Red(gShader.backColor)/255, Green(gShader.backColor)/255, Blue(gShader.backColor)/255, 1.0); //Set blue background
@@ -447,27 +478,26 @@ begin
   glEnable(GL_DEPTH_TEST);
   nglMatrixMode(nGL_PROJECTION);
   nglLoadIdentity();
+
+  backingWidth := GLBox.Width;
+  backingHeight := GLBox.Height;
   {$IFDEF RETINA}
-  SetOrtho(GLBox.BackingHeight, GLBox.BackingWidth, gShader.Distance, gShader.isPerspective);
-  {$ELSE}
-  SetOrtho(GLBox.Height, GLBox.Width, gShader.Distance, gShader.isPerspective);
+  backingWidth := Round(GLBox.Width * LBackingScaleFactor(GLBox.Handle));
+  backingHeight := Round(GLBox.Height * LBackingScaleFactor(GLBox.Handle));
   {$ENDIF}
+  SetOrtho(backingHeight, backingWidth, gShader.Distance, gShader.isPerspective);
   nglMatrixMode (nGL_MODELVIEW);
   //glDepthRange(0.001, 0.1);
   nglLoadIdentity ();
-  {$IFDEF RETINA}
-  nglTranslatef(gTranslateX/GLBox.BackingWidth , gTranslateY/GLBox.BackingHeight,0);
-  {$ELSE}
-  nglTranslatef(gTranslateX/GLBox.Width , gTranslateY/GLBox.Height,0);
-  {$ENDIF}
+  nglTranslatef(gTranslateX/backingWidth , gTranslateY/backingHeight,0);
   //object size normalized to be -1...+1 in largest dimension.
   //closest/furthest possible vertex is therefore -1.73..+1.73 (e.g. cube where corner is sqrt(1+1+1) from origin)
   scale := 1.0;
   nglScalef(0.5/Scale, 0.5/Scale, 0.5/Scale);
   if gShader.isPerspective then
-      nglTranslatef(0,0, -Scale*4*gShader.Distance )
+    nglTranslatef(0,0, -Scale*4*gShader.Distance )
   else
-     nglTranslatef(0,0,  -Scale*2 );
+    nglTranslatef(0,0,  -Scale*2 );
   nglRotatef(90-gElevation,-1,0,0);
   nglRotatef(gAzimuth,0,0,1);
   mv := ngl_ModelViewProjectionMatrix;
@@ -511,6 +541,12 @@ end;
 
 procedure TGLForm1.GLboxMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
+     {$IFDEF RETINA}
+     if (ssShift in Shift) then begin
+        gIsRetina := not gIsRetina;
+        SetRetina;
+     end;
+    {$ENDIF}
      gMouseY := Y;
      gMouseX := X;
 end;
@@ -679,6 +715,9 @@ begin
   GLBox.Parent := self;
   GLBox.MultiSampling:= 4;
   GLBox.Align := alClient;
+  {$IFDEF RETINA}
+  SetRetina;
+  {$ENDIF}
   GLBox.OnPaint := @GLboxPaint; //for "mode delphi" this would be "GLBox.OnPaint := GLboxPaint"
   GLBox.OnMouseDown := @GLboxMouseDown;
   GLBox.OnMouseMove := @GLboxMouseMove;
@@ -686,9 +725,6 @@ begin
   GLBox.OnMouseWheel := @GLboxMouseWheel;
   GLBox.MakeCurrent(false);
   InitGL;
-  {$IFDEF RETINA}
-  GLBox.WantsBestResolutionOpenGLSurface:=true;
-  {$ENDIF}
   OpenMesh('');
   PerspectiveMenu.Checked := gShader.isPerspective;
 end;
@@ -702,3 +738,4 @@ begin
 end;
 
 end.
+
