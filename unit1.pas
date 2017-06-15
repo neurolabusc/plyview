@@ -5,6 +5,9 @@ unit Unit1;
 //If both of the next two lines are commented, use the GLCOREARB library
 // {$DEFINE GLEXT} //If this line is uncommented, use GL/GLEXT library - Fails with MacOS
 // {$DEFINE DGL} //If this line is uncommented, use dglOpenGL library
+
+//{$DEFINE RETINA} // <- requires patch to OpenGLContext.pas to support retina OpenGL
+
 interface
 uses
   {$IFDEF GLEXT}
@@ -444,11 +447,19 @@ begin
   glEnable(GL_DEPTH_TEST);
   nglMatrixMode(nGL_PROJECTION);
   nglLoadIdentity();
+  {$IFDEF RETINA}
+  SetOrtho(GLBox.BackingHeight, GLBox.BackingWidth, gShader.Distance, gShader.isPerspective);
+  {$ELSE}
   SetOrtho(GLBox.Height, GLBox.Width, gShader.Distance, gShader.isPerspective);
+  {$ENDIF}
   nglMatrixMode (nGL_MODELVIEW);
   //glDepthRange(0.001, 0.1);
   nglLoadIdentity ();
+  {$IFDEF RETINA}
+  nglTranslatef(gTranslateX/GLBox.BackingWidth , gTranslateY/GLBox.BackingHeight,0);
+  {$ELSE}
   nglTranslatef(gTranslateX/GLBox.Width , gTranslateY/GLBox.Height,0);
+  {$ENDIF}
   //object size normalized to be -1...+1 in largest dimension.
   //closest/furthest possible vertex is therefore -1.73..+1.73 (e.g. cube where corner is sqrt(1+1+1) from origin)
   scale := 1.0;
@@ -521,7 +532,6 @@ end;
 procedure TGLForm1.OpenMesh(Filename: string);
 begin
   LoadMesh(Filename, gShader.faces, gShader.vertices, gShader.vertexRGBA);
-
   GLBox.MakeCurrent(false);
   LoadBufferData(gShader.faces, gShader.vertices, gShader.vertexRGBA);
   GLBox.invalidate;
@@ -676,6 +686,9 @@ begin
   GLBox.OnMouseWheel := @GLboxMouseWheel;
   GLBox.MakeCurrent(false);
   InitGL;
+  {$IFDEF RETINA}
+  GLBox.WantsBestResolutionOpenGLSurface:=true;
+  {$ENDIF}
   OpenMesh('');
   PerspectiveMenu.Checked := gShader.isPerspective;
 end;
