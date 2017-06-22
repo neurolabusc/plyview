@@ -163,6 +163,7 @@ var
   {$IFDEF RETINA}
   procedure TGLForm1.SetRetina;
   begin
+    //Requires Lazarus 1.9 svn 55355 or later
     //{$DEFINE FELIPE}
     {$IFDEF FELIPE}
     if gIsRetina then
@@ -170,11 +171,9 @@ var
     else
       GLBox.Options := [];
     {$ELSE}
-
     LSetWantsBestResolutionOpenGLSurface(gIsRetina, GLBox.Handle);
     {$ENDIF}
   end;
-
   {$ENDIF}
 
 procedure TGLForm1.ShowmessageError(s: string);
@@ -478,10 +477,9 @@ begin
   glEnable(GL_DEPTH_TEST);
   nglMatrixMode(nGL_PROJECTION);
   nglLoadIdentity();
-
   backingWidth := GLBox.Width;
   backingHeight := GLBox.Height;
-  {$IFDEF RETINA}
+  {$IFDEF RETINA} //requires Lazarus 1.9 svn 55355 or later
   backingWidth := Round(GLBox.Width * LBackingScaleFactor(GLBox.Handle));
   backingHeight := Round(GLBox.Height * LBackingScaleFactor(GLBox.Handle));
   {$ENDIF}
@@ -648,7 +646,7 @@ begin
       gAzimuth := (gAzimuth + 10) mod 360;
       GLbox.Repaint;
    end;
-  Showmessage('OpenGL 4.1 PLY viewer 4/2017 FPS: '+inttostr(round( (kSamp*1000)/(gettickcount-s))));
+  Showmessage('OpenGL 4.1 PLY viewer 6/2017 FPS: '+inttostr(round( (kSamp*1000)/(gettickcount-s))));
 end;
 
 

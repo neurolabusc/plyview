@@ -29,6 +29,9 @@ Whereas on MacOS, you will use this command:
 
  - 4/2017 This project can now be compiled to the GL/GLEXT libraries (uncomment the line "{$DEFINE GLEXT}", note this will NOT compile for MacOS), or dglOpenGL (uncomment the line "{$DEFINE DGL}") or glcorearb (the default build). Note the program works identically for all libraries. The advantage of using the glcorearb is that it ensures developers do not use OpenGL commands and constants that are not supported by Core OpenGL. In other words, while the dglOpenGL library will work fine on any OS, the resulting program will crash on MacOS if the user includes functions or constants not supported by the Core specification. Compiling to the glcorearb library ensures that only supported commands are used.
 
+ - 6/2017 Modified glcorearb.pas to work with more Windows-based OpenGL drivers. Optional retina support for MacOS (shift+click to turn feature on or off).
+
+
 ##### License
 
  This software includes a [BSD license](https://opensource.org/licenses/BSD-2-Clause)

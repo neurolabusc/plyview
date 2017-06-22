@@ -2,7 +2,7 @@
 <CONFIG>
   <ProjectSession>
     <Version Value="10"/>
-    <BuildModes Active="MacOS"/>
+    <BuildModes Active="Default"/>
     <Units Count="20">
       <Unit0>
         <Filename Value="plyview.lpr"/>
@@ -21,8 +21,8 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit1"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="157"/>
-        <CursorPos X="7" Y="166"/>
+        <TopLine Value="464"/>
+        <CursorPos X="62" Y="476"/>
         <UsageCount Value="179"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -125,37 +125,34 @@
       </Unit14>
       <Unit15>
         <Filename Value="glcorearb.pas"/>
-        <EditorIndex Value="4"/>
-        <TopLine Value="2633"/>
-        <CursorPos X="32" Y="2669"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="2271"/>
+        <CursorPos X="32" Y="2292"/>
         <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit15>
       <Unit16>
         <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
         <UnitName Value="GLCocoaNSContext"/>
-        <EditorIndex Value="1"/>
-        <TopLine Value="20"/>
-        <CursorPos X="48" Y="24"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="23"/>
+        <CursorPos X="47" Y="31"/>
         <UsageCount Value="12"/>
-        <Loaded Value="True"/>
       </Unit16>
       <Unit17>
         <Filename Value="../../../lazarus/components/opengl/openglcontext.pas"/>
         <UnitName Value="OpenGLContext"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="626"/>
         <CursorPos X="27" Y="630"/>
         <UsageCount Value="12"/>
-        <Loaded Value="True"/>
       </Unit17>
       <Unit18>
         <Filename Value="/usr/local/share/fpcsrc/packages/cocoaint/src/appkit/NSScreen.inc"/>
-        <EditorIndex Value="2"/>
-        <TopLine Value="57"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="53"/>
         <CursorPos X="61" Y="68"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
       </Unit18>
       <Unit19>
         <Filename Value="../../../Library/Containers/com.apple.mail/Data/Library/Mail Downloads/FF0A807C-71B5-479B-8B59-8AB76D929C11/unit1.pas"/>
@@ -166,127 +163,99 @@
         <UsageCount Value="10"/>
       </Unit19>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="23" HistoryIndex="22">
       <Position1>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="168" Column="47" TopLine="155"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="10" Column="3"/>
       </Position1>
       <Position2>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="176" Column="78" TopLine="163"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="461" Column="61" TopLine="454"/>
       </Position2>
       <Position3>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="178" Column="44" TopLine="166"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="451" Column="46" TopLine="445"/>
       </Position3>
       <Position4>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="223" Column="44" TopLine="212"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="459" Column="75" TopLine="448"/>
       </Position4>
       <Position5>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="391" TopLine="388"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="5" Column="54"/>
       </Position5>
       <Position6>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="32" Column="113" TopLine="25"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="666" Column="36" TopLine="658"/>
       </Position6>
       <Position7>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="39" Column="47" TopLine="27"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="714" TopLine="173"/>
       </Position7>
       <Position8>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="166" Column="47" TopLine="154"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="449" Column="23" TopLine="432"/>
       </Position8>
       <Position9>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="2" Column="98"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="462" Column="50" TopLine="443"/>
       </Position9>
       <Position10>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="31" Column="77" TopLine="20"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="20" Column="97"/>
       </Position10>
       <Position11>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="32" Column="113" TopLine="20"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="23" Column="18" TopLine="6"/>
       </Position11>
       <Position12>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="39" Column="47" TopLine="27"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="547" Column="12" TopLine="533"/>
       </Position12>
       <Position13>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="177" Column="66" TopLine="171"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="49" Column="15" TopLine="42"/>
       </Position13>
       <Position14>
-        <Filename Value="../../../lazarus/components/opengl/glcocoanscontext.pas"/>
-        <Caret Line="125" Column="54" TopLine="114"/>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="173" Column="46" TopLine="162"/>
       </Position14>
       <Position15>
         <Filename Value="unit1.pas"/>
-        <Caret Line="10" Column="3"/>
+        <Caret Line="417" Column="14" TopLine="408"/>
       </Position15>
       <Position16>
         <Filename Value="unit1.pas"/>
-        <Caret Line="461" Column="61" TopLine="454"/>
+        <Caret Line="617" Column="3" TopLine="609"/>
       </Position16>
       <Position17>
         <Filename Value="unit1.pas"/>
-        <Caret Line="451" Column="46" TopLine="445"/>
+        <Caret Line="174" Column="5" TopLine="161"/>
       </Position17>
       <Position18>
         <Filename Value="unit1.pas"/>
-        <Caret Line="459" Column="75" TopLine="448"/>
+        <Caret Line="13" Column="27"/>
       </Position18>
       <Position19>
         <Filename Value="unit1.pas"/>
-        <Caret Line="5" Column="54"/>
+        <Caret Line="471" Column="24" TopLine="453"/>
       </Position19>
       <Position20>
         <Filename Value="unit1.pas"/>
-        <Caret Line="666" Column="36" TopLine="658"/>
+        <Caret Line="166" Column="16" TopLine="155"/>
       </Position20>
       <Position21>
         <Filename Value="unit1.pas"/>
-        <Caret Line="714" TopLine="173"/>
+        <Caret Line="169" Column="17" TopLine="155"/>
       </Position21>
       <Position22>
         <Filename Value="unit1.pas"/>
-        <Caret Line="449" Column="23" TopLine="432"/>
+        <Caret Line="170" Column="38" TopLine="155"/>
       </Position22>
       <Position23>
         <Filename Value="unit1.pas"/>
-        <Caret Line="462" Column="50" TopLine="443"/>
+        <Caret Line="174" Column="51" TopLine="156"/>
       </Position23>
-      <Position24>
-        <Filename Value="unit1.pas"/>
-        <Caret Line="20" Column="97"/>
-      </Position24>
-      <Position25>
-        <Filename Value="unit1.pas"/>
-        <Caret Line="23" Column="18" TopLine="6"/>
-      </Position25>
-      <Position26>
-        <Filename Value="unit1.pas"/>
-        <Caret Line="547" Column="12" TopLine="533"/>
-      </Position26>
-      <Position27>
-        <Filename Value="unit1.pas"/>
-        <Caret Line="49" Column="15" TopLine="42"/>
-      </Position27>
-      <Position28>
-        <Filename Value="unit1.pas"/>
-        <Caret Line="173" Column="46" TopLine="162"/>
-      </Position28>
-      <Position29>
-        <Filename Value="unit1.pas"/>
-        <Caret Line="417" Column="14" TopLine="408"/>
-      </Position29>
-      <Position30>
-        <Filename Value="unit1.pas"/>
-        <Caret Line="617" Column="3" TopLine="609"/>
-      </Position30>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>

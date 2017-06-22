@@ -2289,21 +2289,62 @@ implementation
 {$IFNDEF Windows}
 function wglGetProcAddress(proc: PChar): Pointer;
 begin
-Result := GetProcAddress(LibGL, proc);
+     Result := GetProcAddress(LibGL, proc);
 end;
-{$ENDIF}
 
 function getProc(proc: PChar; var OK: boolean): Pointer;
 begin
  result := wglGetProcAddress(proc);
   if not Assigned(result) then OK := false;
 end;
+{$ELSE}
+//The next few lines are from dglOpenGL by Sascha Willems (2016) and therefore use the
+// Mozilla Public License, version 2.0
+var
+  GL_LibHandle: Pointer = nil;
+
+function getProc(proc: PChar; var OK: boolean): Pointer;
+begin
+  if GL_LibHandle <> nil then begin
+     Result := GetProcAddress(HMODULE(GL_LibHandle), proc);
+     if result <> nil then
+        exit;
+  end;
+  if Addr(wglGetProcAddress) <> nil then
+     Result := wglGetProcAddress(proc);
+  if not Assigned(result) then OK := false;
+end;
+
+function dglFreeLibrary(LibHandle: Pointer): Boolean;
+begin
+  if LibHandle = nil then
+    Result := False
+  else
+    Result := FreeLibrary(HMODULE(LibHandle));
+end;
+
+function dglLoadLibrary(Name: PChar): Pointer;
+begin
+  Result := Pointer(LoadLibrary(Name));
+end;
+
+procedure InitOpenGL;
+const
+ kOPENGL_LIBNAME = 'OpenGL32.dll';
+begin
+  // free opened libraries
+  if GL_LibHandle <> nil then
+    dglFreeLibrary(GL_LibHandle);
+  GL_LibHandle := dglLoadLibrary(PChar(kOPENGL_LIBNAME));
+end;
+{$ENDIF}
 
 //317 procedures for GL_VERSION_3_2
 function Load_GL_VERSION_3_2_CORE : boolean;
 var
  OK : boolean = true;
 begin
+ {$IFDEF Windows}InitOpenGL;{$ENDIF}
  glCullFace := getProc('glCullFace', OK);
  glFrontFace := getProc('glFrontFace', OK);
  glHint := getProc('glHint', OK);
