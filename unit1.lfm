@@ -8,6 +8,7 @@ object GLForm1: TGLForm1
   Menu = MainMenu1
   OnCreate = FormCreate
   OnDropFiles = DropFiles
+  OnShow = FormShow
   Position = poScreenCenter
   LCLVersion = '1.9.0.0'
   object ErrorTimer: TTimer

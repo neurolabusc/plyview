@@ -170,7 +170,7 @@ interface
 {$ENDIF}
 
 uses
-  {$IFDEF FPC}{$IFDEF DARWIN}dynlibs,{$ENDIF}{$ENDIF}  // LoadLibrary functions
+  {$IFDEF FPC}{$IFDEF DARWIN}types, dynlibs,{$ENDIF}{$ENDIF}  // LoadLibrary functions
   SysUtils
   {$IFDEF DGL_WIN}, Windows{$ENDIF}
   {$IFDEF DGL_64BIT} ,math {$ENDIF}

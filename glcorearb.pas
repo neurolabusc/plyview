@@ -2286,56 +2286,26 @@ var
 
 implementation
 
-{$IFNDEF Windows}
-function wglGetProcAddress(proc: PChar): Pointer;
-begin
-     Result := GetProcAddress(LibGL, proc);
-end;
-
-function getProc(proc: PChar; var OK: boolean): Pointer;
-begin
- result := wglGetProcAddress(proc);
-  if not Assigned(result) then OK := false;
-end;
-{$ELSE}
-//The next few lines are from dglOpenGL by Sascha Willems (2016) and therefore use the
-// Mozilla Public License, version 2.0
+{$IFDEF Windows}
 var
-  GL_LibHandle: Pointer = nil;
+  gLibGL : Pointer = nil;
 
 function getProc(proc: PChar; var OK: boolean): Pointer;
 begin
-  if GL_LibHandle <> nil then begin
-     Result := GetProcAddress(HMODULE(GL_LibHandle), proc);
+  if gLibGL <> nil then begin
+     result := GetProcAddress(HMODULE(gLibGL), proc);
      if result <> nil then
         exit;
   end;
   if Addr(wglGetProcAddress) <> nil then
-     Result := wglGetProcAddress(proc);
+     result := wglGetProcAddress(proc);
   if not Assigned(result) then OK := false;
 end;
-
-function dglFreeLibrary(LibHandle: Pointer): Boolean;
+{$ELSE}
+function getProc(proc: PChar; var OK: boolean): Pointer;
 begin
-  if LibHandle = nil then
-    Result := False
-  else
-    Result := FreeLibrary(HMODULE(LibHandle));
-end;
-
-function dglLoadLibrary(Name: PChar): Pointer;
-begin
-  Result := Pointer(LoadLibrary(Name));
-end;
-
-procedure InitOpenGL;
-const
- kOPENGL_LIBNAME = 'OpenGL32.dll';
-begin
-  // free opened libraries
-  if GL_LibHandle <> nil then
-    dglFreeLibrary(GL_LibHandle);
-  GL_LibHandle := dglLoadLibrary(PChar(kOPENGL_LIBNAME));
+  result := GetProcAddress(LibGL, proc);
+  if not Assigned(result) then OK := false;
 end;
 {$ENDIF}
 
@@ -2344,7 +2314,11 @@ function Load_GL_VERSION_3_2_CORE : boolean;
 var
  OK : boolean = true;
 begin
- {$IFDEF Windows}InitOpenGL;{$ENDIF}
+ {$IFDEF Windows}  //see gl.pp
+ if gLibGL <> nil then
+   FreeLibrary(HMODULE(gLibGL));
+ gLibGL := Pointer(LoadLibrary(PChar('OpenGL32.dll')));
+ {$ENDIF}
  glCullFace := getProc('glCullFace', OK);
  glFrontFace := getProc('glFrontFace', OK);
  glHint := getProc('glHint', OK);

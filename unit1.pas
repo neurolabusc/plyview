@@ -6,9 +6,11 @@ unit Unit1;
 // {$DEFINE GLEXT} //If this line is uncommented, use GL/GLEXT library - Fails with MacOS
 // {$DEFINE DGL} //If this line is uncommented, use dglOpenGL library
 
-{$DEFINE RETINA} // <- requires Lazarus 1.9 svn 55355 or later
 {$IFNDEF LCLCocoa}
-  {$UNDEF RETINA} //Retina mode MacOS Cocoa only
+{$ELSE}
+  {$DEFINE RETINA} // <- requires Lazarus 1.9 svn 55355 or later
+  // {$UNDEF RETINA} //disable retina support: works with older versions of lazarus
+  {$UNDEF GLEXT} //GLEXT incompatible with MacOS OpenGL versions >2.1
 {$ENDIF}
 
 interface
@@ -26,6 +28,9 @@ uses
   Menus, OpenGLContext, glmath, lcltype, lclintf, Grids, mesh,
   meshify_simplify_quadric;
 type
+
+  { TGLForm1 }
+
   TGLForm1 = class(TForm)
     ColorDialog1: TColorDialog;
     ErrorTimer: TTimer;
@@ -48,6 +53,7 @@ type
     RotateMenu: TMenuItem;
     OpenDialog1: TOpenDialog;
     OpenMenu: TMenuItem;
+    procedure FormShow(Sender: TObject);
     {$IFDEF RETINA}
     procedure SetRetina;
     {$ENDIF}
@@ -87,24 +93,21 @@ uses
 
 
 type
-
-
-TVtxNormClr = Packed Record
-  vtx   : TPoint3f; //vertex coordinates
-  norm : int32;
-  clr : TRGBA;
-end;
-
-TShader = record
-  vbo_face, vbo_point, vao_point, shaderProgram, vertexArrayObject: GLuint;
-  nface, uniform_ModelViewProjectionMatrix, uniform_ModelViewMatrix, uniform_NormalMatrix: GLint;
-  Distance: single;
-  faces: TFaces;
-  vertices: TVertices;
-  vertexRGBA: TVertexRGBA;
-  objColor, backColor: TColor;
-  isPerspective : boolean;
-end;
+  TVtxNormClr = Packed Record
+    vtx   : TPoint3f; //vertex coordinates
+    norm : int32;
+    clr : TRGBA;
+  end;
+  TShader = record
+    vbo_face, vbo_point, vao_point, shaderProgram, vertexArrayObject: GLuint;
+    nface, uniform_ModelViewProjectionMatrix, uniform_ModelViewMatrix, uniform_NormalMatrix: GLint;
+    Distance: single;
+    faces: TFaces;
+    vertices: TVertices;
+    vertexRGBA: TVertexRGBA;
+    objColor, backColor: TColor;
+    isPerspective : boolean;
+  end;
 
 const
  kMaxDistance = 10;
@@ -151,7 +154,6 @@ kFrag = '#version 330'
 var
   gShader: TShader;
   GLBox:TOpenGLControl;
-  gIsRetina : boolean = true;
   gGLerror : string = '';
   gMouseX : integer = -1;
   gMouseY : integer = -1;
@@ -159,22 +161,23 @@ var
   gTranslateY : integer = 0;
   gElevation : integer = 30;
   gAzimuth : integer = 30;
+{$IFDEF RETINA}
+  gIsRetina : boolean = true;
 
-  {$IFDEF RETINA}
-  procedure TGLForm1.SetRetina;
-  begin
-    //Requires Lazarus 1.9 svn 55355 or later
-    //{$DEFINE FELIPE}
-    {$IFDEF FELIPE}
-    if gIsRetina then
-       GLBox.Options := [ocoMacRetinaMode]
-    else
-      GLBox.Options := [];
-    {$ELSE}
-    LSetWantsBestResolutionOpenGLSurface(gIsRetina, GLBox.Handle);
-    {$ENDIF}
-  end;
+procedure TGLForm1.SetRetina;
+begin
+  //Requires Lazarus 1.9 svn 55355 or later
+  //{$DEFINE FELIPE}
+  {$IFDEF FELIPE}
+  if gIsRetina then
+     GLBox.Options := [ocoMacRetinaMode]
+  else
+    GLBox.Options := [];
+  {$ELSE}
+  LSetWantsBestResolutionOpenGLSurface(gIsRetina, GLBox.Handle);
   {$ENDIF}
+end;
+{$ENDIF}//retina
 
 procedure TGLForm1.ShowmessageError(s: string);
 begin
@@ -191,7 +194,7 @@ begin
   glGetShaderiv(glObjectID, GL_INFO_LOG_LENGTH, @maxLength);
   if (maxLength < 1) then exit;
   setlength(s, maxLength);
-  //{$IFDEF DGL}
+  //{$IFDEF DGL} //older versions of DGL had a different call
   //glGetShaderInfoLog(glObjectID, maxLength, maxLength, @s[1]);
   //{$ELSE}
   glGetShaderInfoLog(glObjectID, maxLength, @maxLength, @s[1]);
@@ -419,18 +422,20 @@ end;
 procedure  InitGL;
 begin
   {$IFDEF DGL} //use dglOpenGL
-   InitOpenGL;
+   if not InitOpenGL then begin
+      GLForm1.ShowmessageError('Error unable to load OpenGL 3.3 Core');
+      exit;
+   end;
    ReadExtensions;
   {$ELSE}
     {$IFDEF GLEXT} //use gl/glext
-     if not  Load_GL_version_3_2 then begin
-       GLForm1.ShowmessageError('Error '+glGetString(GL_VENDOR)+'; OpenGL= '+glGetString(GL_VERSION)+'; Shader='+glGetString(GL_SHADING_LANGUAGE_VERSION));
+     if not  Load_GL_version_3_3 then begin
+       GLForm1.ShowmessageError('Error unable to load OpenGL 3.3');
        exit;
      end;
     {$ELSE} //use glcorearb
-    //If your compiler does not find Load_GL_version_3_3_CORE you will need to update glext.pp
-    if not  Load_GL_version_3_2_CORE then begin
-       GLForm1.ShowmessageError('Error '+glGetString(GL_VENDOR)+'; OpenGL= '+glGetString(GL_VERSION)+'; Shader='+glGetString(GL_SHADING_LANGUAGE_VERSION));
+    if not  Load_GL_version_3_3_CORE then begin
+       GLForm1.ShowmessageError('Error unable to load OpenGL 3.3 Core');
        exit;
     end;
     {$ENDIF}
@@ -721,10 +726,14 @@ begin
   GLBox.OnMouseMove := @GLboxMouseMove;
   GLBox.OnMouseUp := @GLboxMouseUp;
   GLBox.OnMouseWheel := @GLboxMouseWheel;
+  PerspectiveMenu.Checked := gShader.isPerspective;
+end;
+
+procedure TGLForm1.FormShow(Sender: TObject);
+begin
   GLBox.MakeCurrent(false);
   InitGL;
   OpenMesh('');
-  PerspectiveMenu.Checked := gShader.isPerspective;
 end;
 
 procedure TGLForm1.ErrorTimerTimer(Sender: TObject);
@@ -736,4 +745,3 @@ begin
 end;
 
 end.
-
