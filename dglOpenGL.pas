@@ -14767,7 +14767,8 @@ const
   GLU_LIBNAME = 'GLU32.dll';
 {$ELSE}
   {$IFDEF darwin}
-    OPENGL_LIBNAME = 'libGL.dylib';
+    //OPENGL_LIBNAME = 'libGL.dylib';
+    OPENGL_LIBNAME = '/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib';
     GLU_LIBNAME = 'libGLU.dylib';
   {$ELSE}
     OPENGL_LIBNAME = 'libGL.so.1';

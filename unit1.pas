@@ -25,8 +25,8 @@ uses
    {$ENDIF}
   {$ENDIF}
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  Menus, OpenGLContext, glmath, lcltype, lclintf, Grids, mesh,
-  meshify_simplify_quadric;
+  Menus, OpenGLContext, glmath, lcltype, lclintf, mesh,
+  meshify_simplify_quadric, GraphType, Clipbrd;
 type
 
   { TGLForm1 }
@@ -42,6 +42,8 @@ type
     BackColorMenu: TMenuItem;
     GrayColorMenu: TMenuItem;
     DecimateMenu: TMenuItem;
+    EditMenu: TMenuItem;
+    CopyMenu: TMenuItem;
     SaveDialog1: TSaveDialog;
     SaveMenu: TMenuItem;
     PerspectiveMenu: TMenuItem;
@@ -53,6 +55,8 @@ type
     RotateMenu: TMenuItem;
     OpenDialog1: TOpenDialog;
     OpenMenu: TMenuItem;
+    procedure CopyMenuClick(Sender: TObject);
+    function ScreenShot: TBitmap;
     procedure FormShow(Sender: TObject);
     {$IFDEF RETINA}
     procedure SetRetina;
@@ -380,30 +384,30 @@ begin
   glBindVertexArray(gShader.vao_point);
   glBindBuffer(GL_ARRAY_BUFFER, gShader.vbo_point);
   //Vertices
-  //{$IFDEF DGL}
-  //glVertexAttribPointer(kATTRIB_VERT, 3, GL_FLOAT, FALSE, sizeof(TVtxNormClr), PChar(0));
-  //{$ELSE}
+  {$IFDEF DGL}
+  glVertexAttribPointer(kATTRIB_VERT, 3, GL_FLOAT, FALSE, sizeof(TVtxNormClr), PChar(0));
+  {$ELSE}
   glVertexAttribPointer(kATTRIB_VERT, 3, GL_FLOAT, GL_FALSE, sizeof(TVtxNormClr), PChar(0));
-  //{$ENDIF}
+  {$ENDIF}
   glEnableVertexAttribArray(kATTRIB_VERT);
   //Normals typically stored as 3*32 bit floats (96 bytes), but we will pack them as 10-bit integers in a single 32-bit value with GL_INT_2_10_10_10_REV
   //  https://www.opengl.org/wiki/Vertex_Specification_Best_Practices
-  //{$IFDEF DGL}
+  {$IFDEF DGL}
   //glVertexAttribPointer(kATTRIB_NORM, 3, GL_FLOAT, FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
-  //glVertexAttribPointer(kATTRIB_NORM, 4, GL_INT_2_10_10_10_REV, FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
-  //{$ELSE}
+  glVertexAttribPointer(kATTRIB_NORM, 4, GL_INT_2_10_10_10_REV, FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
+  {$ELSE}
   //glVertexAttribPointer(kATTRIB_NORM, 3, GL_FLOAT, GL_FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
   glVertexAttribPointer(kATTRIB_NORM, 4, GL_INT_2_10_10_10_REV, GL_FALSE, sizeof(TVtxNormClr), PChar(sizeof(TPoint3f)));
-  //{$ENDIF}
+  {$ENDIF}
   glEnableVertexAttribArray(kATTRIB_NORM);
   //Color
-  //{$IFDEF DGL}
+  {$IFDEF DGL}
   //glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, TRUE, sizeof(TVtxNormClr), PChar(2 * sizeof(TPoint3f)));
-  //glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, TRUE, sizeof(TVtxNormClr), PChar(sizeof(int32)+ sizeof(TPoint3f)));
-  //{$ELSE}
+  glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, TRUE, sizeof(TVtxNormClr), PChar(sizeof(int32)+ sizeof(TPoint3f)));
+  {$ELSE}
   //glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TVtxNormClr), PChar(2 * sizeof(TPoint3f)));
   glVertexAttribPointer(kATTRIB_CLR, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TVtxNormClr), PChar(sizeof(int32)+ sizeof(TPoint3f)));
-  //{$ENDIF}
+  {$ENDIF}
   glEnableVertexAttribArray(kATTRIB_CLR);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
@@ -422,7 +426,7 @@ end;
 procedure  InitGL;
 begin
   {$IFDEF DGL} //use dglOpenGL
-   if not InitOpenGL then begin
+  if not InitOpenGL then begin
       GLForm1.ShowmessageError('Error unable to load OpenGL 3.3 Core');
       exit;
    end;
@@ -734,6 +738,78 @@ begin
   GLBox.MakeCurrent(false);
   InitGL;
   OpenMesh('');
+end;
+
+function TGLForm1.ScreenShot: TBitmap;
+const
+  ScreenCaptureTransparentBackground : boolean = false;
+var
+  RawImage: TRawImage;
+  p: array of byte;
+  w, h, x, y, BytePerPixel: integer;
+  z: int64;
+  DestPtr: PInteger;
+  maxXY : array[0..1] of GLuint;
+begin
+ GLBox.MakeCurrent;
+ glGetIntegerv(GL_MAX_VIEWPORT_DIMS, @maxXY);  //GL_MAX_TEXTURE_SIZE
+  {$IFDEF RETINA} //requires Lazarus 1.9 svn 55355 or later
+  w := Round(GLBox.Width * LBackingScaleFactor(GLBox.Handle));
+  h := Round(GLBox.Height * LBackingScaleFactor(GLBox.Handle));
+  {$ELSE}
+  w := GLBox.Width;
+  h := GLBox.Height;
+  {$ENDIF}
+ Result:=TBitmap.Create;
+ Result.Width:=w;
+ Result.Height:=h;
+ if ScreenCaptureTransparentBackground then
+   Result.PixelFormat := pf32bit
+ else
+     Result.PixelFormat := pf24bit; //if pf32bit the background color is wrong, e.g. when alpha = 0
+ RawImage := Result.RawImage;
+ BytePerPixel := RawImage.Description.BitsPerPixel div 8;
+ setlength(p, 4*w* h);
+ {$IFDEF Darwin} //http://lists.apple.com/archives/mac-opengl/2006/Nov/msg00196.html
+ glReadPixels(0, 0, w, h, $80E1, $8035, @p[0]); //OSX-Darwin   GL_BGRA = $80E1;  GL_UNSIGNED_INT_8_8_8_8_EXT = $8035;
+ {$ELSE}
+  {$IFDEF Linux}
+    glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, @p[0]); //Linux-Windows   GL_RGBA = $1908; GL_UNSIGNED_BYTE
+  {$ELSE}
+   glReadPixels(0, 0, w, h, $80E1, GL_UNSIGNED_BYTE, @p[0]); //Linux-Windows   GL_RGBA = $1908; GL_UNSIGNED_BYTE
+  {$ENDIF}
+ {$ENDIF}
+ GLbox.ReleaseContext;
+ z := 0;
+ if BytePerPixel <> 4 then begin
+   for y:= h-1 downto 0 do begin
+        DestPtr := PInteger(RawImage.Data);
+        Inc(PByte(DestPtr), y * RawImage.Description.BytesPerLine );
+        for x := 1 to w do begin
+            DestPtr^ := p[z] + (p[z+1] shl 8) + (p[z+2] shl 16);
+            Inc(PByte(DestPtr), BytePerPixel);
+            z := z + 4;
+        end;
+    end; //for y : each line in image
+ end else begin
+     for y:= h-1 downto 0 do begin
+         DestPtr := PInteger(RawImage.Data);
+         Inc(PByte(DestPtr), y * RawImage.Description.BytesPerLine );
+         System.Move(p[z], DestPtr^, w * BytePerPixel );
+         z := z + ( w * 4 );
+   end; //for y : each line in image
+ end;
+ setlength(p, 0);
+ GLbox.ReleaseContext;
+end;
+
+procedure TGLForm1.CopyMenuClick(Sender: TObject);
+var
+ bmp: TBitmap;
+begin
+ bmp := ScreenShot();
+ Clipboard.Assign(bmp);
+ bmp.Free;
 end;
 
 procedure TGLForm1.ErrorTimerTimer(Sender: TObject);

@@ -55,6 +55,14 @@ object GLForm1: TGLForm1
         OnClick = SaveMenuClick
       end
     end
+    object EditMenu: TMenuItem
+      Caption = 'Edit'
+      object CopyMenu: TMenuItem
+        Caption = 'Copy'
+        ShortCut = 4163
+        OnClick = CopyMenuClick
+      end
+    end
     object ColorMenu: TMenuItem
       Caption = 'Color'
       object BackColorMenu: TMenuItem
